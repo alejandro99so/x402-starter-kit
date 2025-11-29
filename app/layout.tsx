@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { ThirdwebProvider } from "thirdweb/react";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "x402 Starter Kit",
-  description: "HTTP 402 payment integration with Thirdweb",
+  description: "HTTP 402 payment integration with Ultravioleta facilitator",
 };
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <ThirdwebProvider>{children}</ThirdwebProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

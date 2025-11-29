@@ -1,45 +1,41 @@
-import { settlePayment, facilitator } from "thirdweb/x402";
-import { createThirdwebClient } from "thirdweb";
-import { avalancheFuji } from "thirdweb/chains";
-import { USDC_FUJI_ADDRESS, PAYMENT_AMOUNTS, API_ENDPOINTS } from "@/lib/constants";
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
+import { paymentMiddleware } from "x402-hono";
+import type { Address } from "viem";
 
-const client = createThirdwebClient({
-  secretKey: process.env.THIRDWEB_SECRET_KEY!,
-});
+const merchantAddress = (process.env.MERCHANT_WALLET_ADDRESS || "0x1d5ab913fb1b76d7ed2c9a731f39be76cb0d34b1") as Address;
 
-const thirdwebFacilitator = facilitator({
-  client,
-  serverWalletAddress: process.env.THIRDWEB_SERVER_WALLET_ADDRESS!,
-});
+const app = new Hono();
 
-export async function GET(request: Request) {
-  const paymentData = request.headers.get("x-payment");
-
-  const result = await settlePayment({
-    resourceUrl: API_ENDPOINTS.PREMIUM,
-    method: "GET",
-    paymentData,
-    payTo: process.env.MERCHANT_WALLET_ADDRESS!,
-    network: avalancheFuji,
-    price: {
-      amount: PAYMENT_AMOUNTS.PREMIUM.amount,
-      asset: {
-        address: USDC_FUJI_ADDRESS,
+// Payment middleware with wildcard route pattern
+app.use(
+  "*",
+  paymentMiddleware(
+    merchantAddress,
+    {
+      "/*": {
+        price: "$0.15",
+        network: "avalanche-fuji",
       },
     },
-    facilitator: thirdwebFacilitator,
-  });
+    {
+      url: "https://facilitator.ultravioletadao.xyz",
+    }
+  )
+);
 
-  if (result.status === 200) {
-    return Response.json({
-      tier: "premium",
-      data: "Welcome to Premium tier! You have unlocked all advanced features.",
-      timestamp: new Date().toISOString(),
-    });
-  } else {
-    return Response.json(result.responseBody, {
-      status: result.status,
-      headers: result.responseHeaders,
-    });
-  }
-}
+app.get("*", (c) => {
+  return c.json({
+    tier: "premium",
+    data: "Welcome to Premium tier! You have access to all advanced features.",
+    features: [
+      "Advanced Analytics",
+      "Priority Support",
+      "Custom Integrations",
+      "Unlimited API Calls",
+    ],
+    timestamp: new Date().toISOString(),
+  });
+});
+
+export const GET = handle(app);
