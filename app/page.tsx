@@ -93,6 +93,12 @@ export default function Home() {
   const [content, setContent] = useState<ContentData | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [payingTier, setPayingTier] = useState<"basic" | "premium" | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by waiting for client mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setLogs([]);
@@ -156,6 +162,23 @@ export default function Home() {
       setPayingTier(null);
     }
   };
+
+  // Prevent hydration mismatch - render loading state until client is mounted
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-rose-50 to-pink-50">
+        <div className="text-center space-y-8 p-8">
+          <div className="space-y-3">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">
+              x402 Starter Kit
+            </h1>
+            <p className="text-lg text-muted-foreground">HTTP 402 Payment Protocol Demo</p>
+            <p className="text-sm text-muted-foreground">Avalanche Fuji Testnet</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!isConnected) {
     return (
